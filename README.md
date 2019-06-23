@@ -9,3 +9,4 @@ Basic Operations available: <br/>
 3.Reading or copying files from the disk.  Command : copyfromdisk source destfilename <br/>
 4.List.   Command : ls <br/>
 5.Exit.   Command : exit <br/>
+6.Delete a file from the disk.   Command : delete filename <br/>
