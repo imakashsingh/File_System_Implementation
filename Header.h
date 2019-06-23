@@ -27,21 +27,29 @@ typedef struct metadata
 	file_data fd[32];
 }metadata;
 
-
+//Finds the size of file in bytes
 int findSize(char*);
 
+//Copies the files from our working directory to the file system
 void copy_to_disk(char* source, char* destination);
 
+//utility function to format the disk
 void format();
 
+//lists all files present in the file system
 void list_all_files();
 
+//function to open a file
 FILE* f_open(char *filename, char *mode);
 
+//Copies the files from the file system to our working directory 
 void copy_from_disk(char *source_file, char *destination_file);
 
+//reads data from disk(file system) and copies into a buffer
 void read_block(int block_no, char* buff);
 
+//writes data to disk(file system) from a buffer
 void write_block(int block_no, char* buff);
 
+//utility to delete a file in disk(file system)
 void delete_file_from_disk(char *filename);

@@ -12,7 +12,7 @@ int main()
 		printf(">");
 		scanf("%[^\n]%*c", string);
 		string[strlen(string)] = '\0';
-		while (string[i] != '\0')
+		while (string[i] != '\0' && i < strlen(string))
 		{
 			while (string[i] != ' ' && string[i] != '\0' && string[i] != '\n')
 			{
@@ -22,13 +22,13 @@ int main()
 			if (string[i] != '\n' && i < strlen(string))
 			{
 				i++;
-				while (string[i] != ' ' && string[i] != '\0' && string[i] != '\n')
+				while (string[i] != ' ' && string[i] != '\0' && string[i] != '\n' && i < strlen(string))
 				{
 					source[source_indx++] = string[i++];
 				}
 				source[source_indx] = '\0';
 				i++;
-				while (string[i] != '\0')
+				while (string[i] != ' ' && string[i] != '\0' && string[i] != '\n' && i < strlen(string))
 				{
 					destination[dest_indx++] = string[i++];
 				}
@@ -54,6 +54,10 @@ int main()
 		else if (strcmp(command, "exit") == 0)
 		{
 			exit(0);
+		}
+		else if (strcmp(command, "delete") == 0)
+		{
+			delete_file_from_disk(source);
 		}
 		else
 			printf("invalid command\n");

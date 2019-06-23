@@ -26,8 +26,9 @@ void copy_to_disk(char* source, char* destination)
 	metadata md;
 	char read_buffer[BLOCK_SIZE+1];
 	char write_buffer[BLOCK_SIZE+1];
-	read_block(0, read_buffer);
 
+	//reading metadata from disk
+	read_block(0, read_buffer);
 	memcpy(&md, read_buffer, sizeof(metadata));
 
 	if (md.magic_number != MAGIC_NUMBER)
@@ -40,6 +41,8 @@ void copy_to_disk(char* source, char* destination)
 
 	if (ssize > ((md.no_of_free_blocks)*BLOCK_SIZE))
 	{
+		printf("Available Space(in bytes) : %d\n", ((md.no_of_free_blocks)*BLOCK_SIZE));
+		printf("\nFile size(in bytes) : %d\n", ssize);
 		printf("No available space. Disk is full\n");
 	}
 	else
@@ -70,6 +73,7 @@ void copy_to_disk(char* source, char* destination)
 		md.file_no += 1;
 		md.no_of_files += 1;
 
+		//writing metadata to disk
 		memcpy(write_buffer, &md, sizeof(metadata));
 		write_block(0, write_buffer);
 
@@ -89,8 +93,9 @@ void copy_from_disk(char* source, char* destination)
 {
 	metadata md;
 	char read_buffer[BLOCK_SIZE+1];
-	read_block(0, read_buffer);
 
+	//reading metadata from disk
+	read_block(0, read_buffer);
 	memcpy(&md, read_buffer, sizeof(metadata));
 
 	int rem_size = 0;
@@ -126,12 +131,14 @@ void copy_from_disk(char* source, char* destination)
 void list_all_files()
 {
 	metadata md;
+
+	//reading metadata from disk
 	char read_buffer[BLOCK_SIZE+1];
 	read_block(0, read_buffer);
 
 	memcpy(&md, read_buffer, sizeof(metadata));
 
-	if (md.magic_number != MAGIC_NUMBER)
+	if (md.magic_number != MAGIC_NUMBER || md.no_of_files == 0)
 	{
 		printf("No files in memory\n");
 		return;
@@ -161,17 +168,22 @@ void format()
 	{
 		strcpy(md.fd[i].file_name, arr);
 	}
+
+	//writing metadata to disk
 	memcpy(write_buffer, &md, sizeof(md));
 	write_block(0, write_buffer);
 }
 
 void delete_file_from_disk(char *filename)
 {
+	int file_found = 0;
 	metadata md;
 	char read_buffer[BLOCK_SIZE + 1];
 	char write_buffer[BLOCK_SIZE + 1];
 
+	//reading metadata from disk
 	read_block(0, read_buffer);
+	memcpy(&md, read_buffer, sizeof(metadata));
 
 	if (md.magic_number != MAGIC_NUMBER)
 	{
@@ -189,13 +201,18 @@ void delete_file_from_disk(char *filename)
 		{
 			if (strcmp(md.fd[i].file_name, filename) == 0)
 			{
+				file_found = 1;
+
+				//if the file is last file
 				if (i == md.no_of_files - 1)
 				{
+					md.no_of_free_blocks = md.no_of_free_blocks + md.fd[i].no_of_blocks;
 					md.file_no = md.file_no - 1;
+					md.no_of_files -= 1;
 					int block_no = ceil((float)((md.fd[i].starting_block_address) / BLOCK_SIZE));
 					for (int j = block_no; j < ((md.fd[i].no_of_blocks) + block_no); j++)
 					{
-						//
+						md.arr[j] = 0;
 					}
 					memset(md.fd[i].file_name, '\0', sizeof(md.fd[i].file_name));
 					md.fd[i].length = 0;
@@ -204,16 +221,30 @@ void delete_file_from_disk(char *filename)
 				}
 				else
 				{
-					memcpy(md.fd[md.file_no - 1].file_name, md.fd[i].file_name, sizeof(md.fd[i].file_name));
+					md.no_of_free_blocks = md.no_of_free_blocks + md.fd[i].no_of_blocks;
+					int block_no = ceil((float)((md.fd[i].starting_block_address) / BLOCK_SIZE));
+					for (int j = block_no; j < ((md.fd[i].no_of_blocks) + block_no); j++)
+					{
+						md.arr[j] = 0;
+					}
+					memcpy(md.fd[i].file_name, md.fd[md.file_no - 1].file_name, sizeof(md.fd[i].file_name));
 					md.fd[i].length = md.fd[md.file_no - 1].length;
 					md.fd[i].no_of_blocks = md.fd[md.file_no - 1].no_of_blocks;
 					md.fd[i].starting_block_address = md.fd[md.file_no - 1].starting_block_address;
 					md.no_of_files -= 1;
 					md.file_no -= 1;
-					//md.
 				}
 			}
 		}
-	}
+		if (file_found == 0)
+		{
+			printf("No file with filename %s found in the disk.\n", filename);
+			return;
+		}
 
+		//writing metadata to disk
+		memcpy(write_buffer, &md, sizeof(md));
+		write_block(0, write_buffer);
+		return;
+	}
 }
